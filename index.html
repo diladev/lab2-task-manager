@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Task Manager</title>
+  </head>
+
+  <body>
+    <h1>Task Manager</h1>
+
+    <button id="loadBtn">Load Tasks</button>
+    <ul id="taskList"></ul>
+
+    <input type="text" id="taskInput" placeholder="New task" />
+    <button id="addBtn">Add Task</button>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+
+        // ========================
+        // LOAD TASKS (GET)
+        // ========================
+        $("#loadBtn").click(function () {
+          $.ajax({
+            url: "http://localhost:3000/tasks",
+            method: "GET",
+            success: function (data) {
+              $("#taskList").empty();
+
+              data.forEach((task) => {
+                $("#taskList").append(`
+                  <li data-id="${task.id}">
+                    <span class="taskTitle">${task.title}</span>
+                    
+                    <input 
+                      class="updateInput" 
+                      type="text" 
+                      placeholder="New title" 
+                      style="display:none;" 
+                    />
+
+                    <button class="deleteBtn">Delete</button>
+                    <button class="updateBtn">Update</button>
+                  </li>
+                `);
+              });
+            },
+          });
+        });
+
+
+        // ========================
+        // ADD TASK (POST)
+        // ========================
+        $("#addBtn").click(function () {
+          let task = $("#taskInput").val();
+
+          $.ajax({
+            url: "http://localhost:3000/tasks",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ title: task }),
+            success: function () {
+              alert("Task added");
+              $("#taskInput").val("");
+            },
+          });
+        });
+
+
+        // ========================
+        // DELETE TASK (DELETE)
+        // ========================
+        $(document).on("click", ".deleteBtn", function () {
+          let id = $(this).parent().data("id");
+
+          $.ajax({
+            url: `http://localhost:3000/tasks/${id}`,
+            method: "DELETE",
+            success: function () {
+              alert("Task deleted");
+            },
+          });
+        });
+
+
+        // ========================
+        // UPDATE TASK (PUT)
+        // ========================
+        $(document).on("click", ".updateBtn", function () {
+          let $li = $(this).parent();
+          let $input = $li.find(".updateInput");
+
+          // First click → show input
+          if ($input.is(":hidden")) {
+            $input.show().focus();
+            $(this).text("Confirm");
+          } 
+          // Second click → update
+          else {
+            let newTitle = $input.val().trim();
+
+            if (!newTitle) {
+              alert("Please enter a new title.");
+              return;
+            }
+
+            let id = $li.data("id");
+
+            $.ajax({
+              url: `http://localhost:3000/tasks/${id}`,
+              method: "PUT",
+              contentType: "application/json",
+              data: JSON.stringify({ title: newTitle }),
+              success: function () {
+                $li.find(".taskTitle").text(newTitle);
+                $input.hide().val("");
+                $li.find(".updateBtn").text("Update");
+
+                alert("Task updated");
+              },
+            });
+          }
+        });
+
+      });
+    </script>
+  </body>
+</html>
