@@ -13,11 +13,17 @@
     <input type="text" id="taskInput" placeholder="New task" />
     <button id="addBtn">Add Task</button>
 
+    <hr />
+
+    <!-- NEW BUTTONS -->
+    <button id="xhrBtn">Load with XHR</button>
+    <button id="promiseBtn">Load with Promise</button>
+    <button id="asyncBtn">Load with Async/Await</button>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
       $(document).ready(function () {
-
         // ========================
         // LOAD TASKS (GET)
         // ========================
@@ -49,7 +55,6 @@
           });
         });
 
-
         // ========================
         // ADD TASK (POST)
         // ========================
@@ -68,7 +73,6 @@
           });
         });
 
-
         // ========================
         // DELETE TASK (DELETE)
         // ========================
@@ -84,7 +88,6 @@
           });
         });
 
-
         // ========================
         // UPDATE TASK (PUT)
         // ========================
@@ -92,13 +95,10 @@
           let $li = $(this).parent();
           let $input = $li.find(".updateInput");
 
-          // First click → show input
           if ($input.is(":hidden")) {
             $input.show().focus();
             $(this).text("Confirm");
-          } 
-          // Second click → update
-          else {
+          } else {
             let newTitle = $input.val().trim();
 
             if (!newTitle) {
@@ -124,6 +124,84 @@
           }
         });
 
+        // ========================
+        // LOAD TASKS (XHR)
+        // ========================
+        $("#xhrBtn").click(function () {
+          let xhr = new XMLHttpRequest();
+
+          xhr.open("GET", "http://localhost:3000/tasks");
+
+          xhr.onload = function () {
+            if (xhr.status === 200) {
+              let data = JSON.parse(xhr.responseText);
+
+              $("#taskList").empty();
+
+              data.forEach((task) => {
+                $("#taskList").append(`
+                  <li>${task.title} (XHR)</li>
+                `);
+              });
+            }
+          };
+
+          xhr.send();
+        });
+
+        // ========================
+        // LOAD TASKS (PROMISE)
+        // ========================
+        function getTasksPromise() {
+          return new Promise((resolve, reject) => {
+            $.ajax({
+              url: "http://localhost:3000/tasks",
+              method: "GET",
+              success: resolve,
+              error: reject,
+            });
+          });
+        }
+
+        $("#promiseBtn").click(function () {
+          getTasksPromise()
+            .then((data) => {
+              $("#taskList").empty();
+
+              data.forEach((task) => {
+                $("#taskList").append(`
+                  <li>${task.title} (Promise)</li>
+                `);
+              });
+            })
+            .catch(() => {
+              alert("Error loading tasks");
+            });
+        });
+
+        // ========================
+        // LOAD TASKS (ASYNC/AWAIT)
+        // ========================
+        async function loadTasksAsync() {
+          try {
+            let response = await fetch("http://localhost:3000/tasks");
+            let data = await response.json();
+
+            $("#taskList").empty();
+
+            data.forEach((task) => {
+              $("#taskList").append(`
+                <li>${task.title} (Async/Await)</li>
+              `);
+            });
+          } catch (error) {
+            alert("Error loading tasks");
+          }
+        }
+
+        $("#asyncBtn").click(function () {
+          loadTasksAsync();
+        });
       });
     </script>
   </body>
